@@ -1,0 +1,215 @@
+<svg width="900" height="1100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="900" height="1100" fill="#ffffff"/>
+  
+  <!-- Title -->
+  <text x="450" y="35" font-family="Courier New, monospace" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">
+    Video Calling App - Code Structure
+  </text>
+  
+  <!-- Main Container -->
+  <rect x="30" y="60" width="840" height="1010" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2" rx="8"/>
+  
+  <!-- Root folder -->
+  <g id="root">
+    <text x="50" y="95" font-family="Courier New, monospace" font-size="16" font-weight="bold" fill="#0066cc">
+      📁 video-calling-app/
+    </text>
+  </g>
+  
+  <!-- Backend Section -->
+  <g id="backend-section">
+    <rect x="50" y="110" width="800" height="420" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5" rx="5"/>
+    <text x="60" y="135" font-family="Courier New, monospace" font-size="15" font-weight="bold" fill="#1565c0">
+      📁 backend/
+    </text>
+    <text x="820" y="135" font-family="Arial, sans-serif" font-size="11" fill="#666" text-anchor="end">
+      (Golang Server)
+    </text>
+    
+    <!-- cmd -->
+    <text x="90" y="165" font-family="Courier New, monospace" font-size="14" fill="#0066cc">
+      📁 cmd/
+    </text>
+    <text x="130" y="190" font-family="Courier New, monospace" font-size="14" fill="#0066cc">
+      📁 server/
+    </text>
+    <text x="170" y="215" font-family="Courier New, monospace" font-size="14" fill="#2e7d32">
+      📄 main.go
+    </text>
+    <text x="300" y="215" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Application entry point
+    </text>
+    
+    <!-- internal -->
+    <text x="90" y="245" font-family="Courier New, monospace" font-size="14" fill="#0066cc">
+      📁 internal/
+    </text>
+    
+    <text x="130" y="270" font-family="Courier New, monospace" font-size="14" fill="#0066cc">
+      📁 signaling/
+    </text>
+    <text x="170" y="295" font-family="Courier New, monospace" font-size="14" fill="#2e7d32">
+      📄 hub.go
+    </text>
+    <text x="300" y="295" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - WebSocket hub, manages all connections
+    </text>
+    <text x="170" y="320" font-family="Courier New, monospace" font-size="14" fill="#2e7d32">
+      📄 client.go
+    </text>
+    <text x="300" y="320" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Individual client connection handler
+    </text>
+    <text x="170" y="345" font-family="Courier New, monospace" font-size="14" fill="#2e7d32">
+      📄 room.go
+    </text>
+    <text x="300" y="345" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Room management logic
+    </text>
+    
+    <text x="130" y="375" font-family="Courier New, monospace" font-size="14" fill="#0066cc">
+      📁 auth/
+    </text>
+    <text x="170" y="400" font-family="Courier New, monospace" font-size="14" fill="#2e7d32">
+      📄 jwt.go
+    </text>
+    <text x="300" y="400" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - JWT token generation and validation
+    </text>
+    
+    <text x="130" y="430" font-family="Courier New, monospace" font-size="14" fill="#0066cc">
+      📁 models/
+    </text>
+    <text x="170" y="455" font-family="Courier New, monospace" font-size="14" fill="#2e7d32">
+      📄 user.go
+    </text>
+    <text x="300" y="455" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - User data structures
+    </text>
+    
+    <!-- pkg -->
+    <text x="90" y="485" font-family="Courier New, monospace" font-size="14" fill="#0066cc">
+      📁 pkg/
+    </text>
+    <text x="130" y="510" font-family="Courier New, monospace" font-size="14" fill="#0066cc">
+      📁 config/
+    </text>
+    <text x="550" y="510" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Configuration management
+    </text>
+  </g>
+  
+  <!-- Frontend Section -->
+  <g id="frontend-section">
+    <rect x="50" y="545" width="800" height="380" fill="#fff3e0" stroke="#e65100" stroke-width="1.5" rx="5"/>
+    <text x="60" y="570" font-family="Courier New, monospace" font-size="15" font-weight="bold" fill="#e65100">
+      📁 frontend/
+    </text>
+    <text x="820" y="570" font-family="Arial, sans-serif" font-size="11" fill="#666" text-anchor="end">
+      (React/Vue/Vanilla JS)
+    </text>
+    
+    <!-- src -->
+    <text x="90" y="600" font-family="Courier New, monospace" font-size="14" fill="#d84315">
+      📁 src/
+    </text>
+    
+    <text x="130" y="625" font-family="Courier New, monospace" font-size="14" fill="#d84315">
+      📁 components/
+    </text>
+    <text x="170" y="650" font-family="Courier New, monospace" font-size="14" fill="#f57c00">
+      📄 VideoCall.jsx
+    </text>
+    <text x="330" y="650" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Main video call component
+    </text>
+    <text x="170" y="675" font-family="Courier New, monospace" font-size="14" fill="#f57c00">
+      📄 Chat.jsx
+    </text>
+    <text x="330" y="675" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Chat interface component
+    </text>
+    <text x="170" y="700" font-family="Courier New, monospace" font-size="14" fill="#f57c00">
+      📄 Controls.jsx
+    </text>
+    <text x="330" y="700" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Mute/camera/screen share controls
+    </text>
+    
+    <text x="130" y="730" font-family="Courier New, monospace" font-size="14" fill="#d84315">
+      📁 services/
+    </text>
+    <text x="170" y="755" font-family="Courier New, monospace" font-size="14" fill="#f57c00">
+      📄 signaling.js
+    </text>
+    <text x="330" y="755" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - WebSocket signaling service
+    </text>
+    <text x="170" y="780" font-family="Courier New, monospace" font-size="14" fill="#f57c00">
+      📄 webrtc.js
+    </text>
+    <text x="330" y="780" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - WebRTC peer connection logic
+    </text>
+    
+    <text x="130" y="810" font-family="Courier New, monospace" font-size="14" fill="#f57c00">
+      📄 App.jsx
+    </text>
+    <text x="330" y="810" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Root application component
+    </text>
+    
+    <!-- package files -->
+    <text x="90" y="840" font-family="Courier New, monospace" font-size="14" fill="#f57c00">
+      📄 package.json
+    </text>
+    <text x="330" y="840" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - NPM dependencies and scripts
+    </text>
+    
+    <text x="90" y="870" font-family="Courier New, monospace" font-size="14" fill="#757575">
+      🐳 Dockerfile
+    </text>
+    <text x="330" y="870" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Frontend container configuration
+    </text>
+  </g>
+  
+  <!-- Root level files -->
+  <g id="root-files">
+    <text x="70" y="955" font-family="Courier New, monospace" font-size="14" fill="#2e7d32">
+      📄 go.mod
+    </text>
+    <text x="330" y="955" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Go module dependencies
+    </text>
+    
+    <text x="70" y="985" font-family="Courier New, monospace" font-size="14" fill="#757575">
+      🐳 Dockerfile
+    </text>
+    <text x="330" y="985" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Backend container configuration
+    </text>
+    
+    <text x="70" y="1015" font-family="Courier New, monospace" font-size="14" fill="#1976d2">
+      🐳 docker-compose.yml
+    </text>
+    <text x="330" y="1015" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Multi-container orchestration
+    </text>
+    
+    <text x="70" y="1045" font-family="Courier New, monospace" font-size="14" fill="#6a1b9a">
+      📄 README.md
+    </text>
+    <text x="330" y="1045" font-family="Arial, sans-serif" font-size="11" fill="#666">
+      - Project documentation
+    </text>
+  </g>
+  
+  <!-- Legend -->
+  <rect x="50" y="1075" width="250" height="20" fill="#e8f5e9" stroke="#4caf50" stroke-width="1" rx="3"/>
+  <text x="175" y="1090" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#2e7d32">
+    Directory | File | Docker
+  </text>
+</svg>

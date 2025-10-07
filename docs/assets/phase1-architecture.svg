@@ -1,0 +1,220 @@
+<svg width="1000" height="700" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1000" height="700" fill="#ffffff"/>
+  
+  <!-- Title -->
+  <text x="500" y="30" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">
+    Phase 1: Video Calling Architecture
+  </text>
+  
+  <!-- Client Side Section -->
+  <g id="client-section">
+    <rect x="50" y="70" width="400" height="200" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="5"/>
+    <text x="250" y="95" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#1565c0">
+      Client Side
+    </text>
+    
+    <!-- Browser A -->
+    <rect x="70" y="120" width="160" height="120" fill="#bbdefb" stroke="#0d47a1" stroke-width="2" rx="5"/>
+    <text x="150" y="145" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#0d47a1">
+      Browser A
+    </text>
+    <text x="150" y="165" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#555">
+      (WebRTC Client)
+    </text>
+    <text x="150" y="190" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • Camera/Mic
+    </text>
+    <text x="150" y="210" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • Screen Share
+    </text>
+    <text x="150" y="230" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • Chat
+    </text>
+    
+    <!-- Browser B -->
+    <rect x="270" y="120" width="160" height="120" fill="#bbdefb" stroke="#0d47a1" stroke-width="2" rx="5"/>
+    <text x="350" y="145" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#0d47a1">
+      Browser B
+    </text>
+    <text x="350" y="165" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#555">
+      (WebRTC Client)
+    </text>
+    <text x="350" y="190" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • Camera/Mic
+    </text>
+    <text x="350" y="210" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • Screen Share
+    </text>
+    <text x="350" y="230" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • Chat
+    </text>
+  </g>
+  
+  <!-- Backend Services Section -->
+  <g id="backend-section">
+    <rect x="50" y="320" width="400" height="200" fill="#fff3e0" stroke="#e65100" stroke-width="2" rx="5"/>
+    <text x="250" y="345" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#e65100">
+      Backend Services
+    </text>
+    
+    <!-- Signaling Server -->
+    <rect x="70" y="370" width="160" height="120" fill="#ffe0b2" stroke="#bf360c" stroke-width="2" rx="5"/>
+    <text x="150" y="395" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#bf360c">
+      Signaling Server
+    </text>
+    <text x="150" y="415" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#555">
+      (Golang)
+    </text>
+    <text x="150" y="440" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • WebSocket
+    </text>
+    <text x="150" y="460" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • Room Mgmt
+    </text>
+    <text x="150" y="480" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • SDP/ICE Relay
+    </text>
+    
+    <!-- Database -->
+    <rect x="270" y="370" width="160" height="120" fill="#ffe0b2" stroke="#bf360c" stroke-width="2" rx="5"/>
+    <text x="350" y="395" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#bf360c">
+      Database
+    </text>
+    <text x="350" y="415" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#555">
+      (PostgreSQL)
+    </text>
+    <text x="350" y="445" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • Users
+    </text>
+    <text x="350" y="465" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      • Rooms
+    </text>
+  </g>
+  
+  <!-- External Services Section -->
+  <g id="external-section">
+    <rect x="550" y="320" width="400" height="200" fill="#f3e5f5" stroke="#4a148c" stroke-width="2" rx="5"/>
+    <text x="750" y="345" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#4a148c">
+      External Services
+    </text>
+    
+    <!-- STUN Server -->
+    <rect x="570" y="370" width="160" height="120" fill="#e1bee7" stroke="#6a1b9a" stroke-width="2" rx="5"/>
+    <text x="650" y="395" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#4a148c">
+      STUN Server
+    </text>
+    <text x="650" y="420" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      (Google STUN /
+    </text>
+    <text x="650" y="440" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      Coturn)
+    </text>
+    <text x="650" y="470" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      NAT Traversal
+    </text>
+    
+    <!-- TURN Server -->
+    <rect x="770" y="370" width="160" height="120" fill="#e1bee7" stroke="#6a1b9a" stroke-width="2" rx="5"/>
+    <text x="850" y="395" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#4a148c">
+      TURN Server
+    </text>
+    <text x="850" y="415" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#555">
+      (Coturn)
+    </text>
+    <text x="850" y="445" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      Media Relay
+    </text>
+    <text x="850" y="465" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">
+      (if P2P fails)
+    </text>
+  </g>
+  
+  <!-- Arrows and Connections -->
+  
+  <!-- P2P Connection between browsers (bidirectional) -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#2e7d32"/>
+    </marker>
+  </defs>
+  <line x1="230" y1="150" x2="270" y2="150" stroke="#2e7d32" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <line x1="270" y1="170" x2="230" y2="170" stroke="#2e7d32" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <text x="250" y="145" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#2e7d32">
+    P2P WebRTC
+  </text>
+  <text x="250" y="195" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#2e7d32">
+    Video/Audio/Screen/Chat
+  </text>
+  
+  <!-- WebSocket Connections -->
+  <defs>
+    <marker id="arrowhead-ws" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#1565c0"/>
+    </marker>
+  </defs>
+  <line x1="120" y1="240" x2="120" y2="370" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowhead-ws)"/>
+  <line x1="140" y1="370" x2="140" y2="240" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowhead-ws)"/>
+  <text x="90" y="305" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#1565c0" transform="rotate(-90 90 305)">
+    WebSocket
+  </text>
+  
+  <line x1="380" y1="240" x2="380" y2="370" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowhead-ws)"/>
+  <line x1="400" y1="370" x2="400" y2="240" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowhead-ws)"/>
+  <text x="420" y="305" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#1565c0" transform="rotate(-90 420 305)">
+    WebSocket
+  </text>
+  
+  <!-- Database Connection -->
+  <defs>
+    <marker id="arrowhead-db" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#e65100"/>
+    </marker>
+  </defs>
+  <line x1="230" y1="430" x2="270" y2="430" stroke="#e65100" stroke-width="2" marker-end="url(#arrowhead-db)"/>
+  <text x="250" y="420" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#e65100">
+    Store/Retrieve
+  </text>
+  
+  <!-- STUN Connections (dashed) -->
+  <line x1="150" y1="240" x2="600" y2="370" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="5,5"/>
+  <line x1="350" y1="240" x2="680" y2="370" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="330" y="290" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6a1b9a">
+    NAT Discovery
+  </text>
+  
+  <!-- TURN Connections (dashed) -->
+  <line x1="200" y1="240" x2="800" y2="370" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="5,5"/>
+  <line x1="380" y1="240" x2="880" y2="370" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="570" y="290" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6a1b9a">
+    Relay (if needed)
+  </text>
+  
+  <!-- Legend -->
+  <g id="legend">
+    <rect x="50" y="570" width="900" height="110" fill="#f5f5f5" stroke="#999" stroke-width="1" rx="5"/>
+    <text x="500" y="595" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">
+      Legend
+    </text>
+    
+    <line x1="80" y1="620" x2="150" y2="620" stroke="#2e7d32" stroke-width="3"/>
+    <text x="160" y="625" font-family="Arial, sans-serif" font-size="12" fill="#333">
+      P2P WebRTC Connection (Direct media flow)
+    </text>
+    
+    <line x1="480" y1="620" x2="550" y2="620" stroke="#1565c0" stroke-width="2"/>
+    <text x="560" y="625" font-family="Arial, sans-serif" font-size="12" fill="#333">
+      WebSocket Signaling (SDP/ICE exchange)
+    </text>
+    
+    <line x1="80" y1="650" x2="150" y2="650" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="5,5"/>
+    <text x="160" y="655" font-family="Arial, sans-serif" font-size="12" fill="#333">
+      STUN/TURN Connection (NAT traversal, used when needed)
+    </text>
+    
+    <line x1="600" y1="650" x2="670" y2="650" stroke="#e65100" stroke-width="2"/>
+    <text x="680" y="655" font-family="Arial, sans-serif" font-size="12" fill="#333">
+      Database Connection
+    </text>
+  </g>
+</svg>
