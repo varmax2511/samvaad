@@ -1,4 +1,4 @@
-module github.com/varmax2511/samvada/backend
+module github.com/varmax2511/samvaad/backend
 
 go 1.24.2
 

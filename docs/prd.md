@@ -1,7 +1,7 @@
 # Overview
 
 ## Executive Summary
-Samvada represents a platform which allows to have a dialogue, conversation, discussion or debate.The purpose of this product is give a free, open source tool to allow setting up of video conferencing. Samvada intents to offer a product that can be used by anyone to deploy their own video conferencing solution. The product being open source will rely on the community to contribute and extend its capabilities.
+Samvaad represents a platform which allows to have a dialogue, conversation, discussion or debate.The purpose of this product is give a free, open source tool to allow setting up of video conferencing. Samvaad intents to offer a product that can be used by anyone to deploy their own video conferencing solution. The product being open source will rely on the community to contribute and extend its capabilities.
 
 # Problem Statement
 

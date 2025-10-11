@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/varmax2511/samvada/backend/internal/logger"
-	"github.com/varmax2511/samvada/backend/internal/signaling"
+	"github.com/varmax2511/samvaad/backend/internal/logger"
+	"github.com/varmax2511/samvaad/backend/internal/signaling"
 )
 
 // upgrades the HTTP server connection to the WebSocket protocol
@@ -24,7 +24,7 @@ func main() {
 	appLogger := logger.NewLogger()
 	slog.SetDefault(appLogger)
 
-	slog.Info("starting Samvada ....")
+	slog.Info("starting Samvaad server ....")
 
 	hub := signaling.NewHub()
 	go hub.Run()
