@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Samvaad - Video Room</title>
+        <style>
+            * { box-sizing: border-box; }
+            body {
+                font-family: Arial, sans-serif;
+                padding: 20px;
+                margin: 0;
+                background: #1a1a2e;
+                color: #eee;
+            }
+            h1 {
+                color: #00d9ff;
+                margin-bottom: 10px;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            .status {
+                padding: 10px;
+                margin: 10px 0;
+                border-radius: 5px;
+            }
+            .connected { background: #1e5128; }
+            .disconnected { background: #5c1e1e; }
+
+            /* Video Section */
+            .video-container {
+                display: flex;
+                gap: 20px;
+                margin: 20px 0;
+                flex-wrap: wrap;
+            }
+            .video-wrapper {
+                flex: 1;
+                min-width: 300px;
+                background: #16213e;
+                border-radius: 10px;
+                padding: 10px;
+                position: relative;
+            }
+            .video-wrapper h3 {
+                margin: 0 0 10px 0;
+                color: #00d9ff;
+                font-size: 14px;
+            }
+            video {
+                width: 100%;
+                border-radius: 8px;
+                background: #0f0f23;
+            }
+            .video-placeholder {
+                width: 100%;
+                aspect-ratio: 16/9;
+                background: #0f0f23;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #666;
+            }
+
+            /* Controls */
+            .controls {
+                background: #16213e;
+                padding: 15px;
+                border-radius: 10px;
+                margin: 10px 0;
+            }
+            .control-row {
+                display: flex;
+                gap: 10px;
+                margin: 10px 0;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+            button {
+                padding: 10px 15px;
+                cursor: pointer;
+                border: none;
+                border-radius: 5px;
+                background: #00d9ff;
+                color: #1a1a2e;
+                font-weight: bold;
+                transition: all 0.2s;
+            }
+            button:hover {
+                background: #00b8d9;
+                transform: translateY(-1px);
+            }
+            button:disabled {
+                background: #444;
+                color: #888;
+                cursor: not-allowed;
+                transform: none;
+            }
+            button.danger {
+                background: #e74c3c;
+                color: white;
+            }
+            button.danger:hover {
+                background: #c0392b;
+            }
+            button.success {
+                background: #27ae60;
+                color: white;
+            }
+            button.success:hover {
+                background: #1e8449;
+            }
+            input {
+                padding: 10px;
+                border-radius: 5px;
+                border: 1px solid #444;
+                background: #0f0f23;
+                color: #eee;
+                width: 200px;
+            }
+            input:focus {
+                outline: none;
+                border-color: #00d9ff;
+            }
+
+            /* Messages Log */
+            .messages {
+                border: 1px solid #333;
+                padding: 10px;
+                height: 200px;
+                overflow-y: auto;
+                margin: 10px 0;
+                background: #0f0f23;
+                border-radius: 8px;
+                font-family: monospace;
+                font-size: 12px;
+            }
+            .message {
+                padding: 4px 8px;
+                margin: 3px 0;
+                background: #16213e;
+                border-radius: 3px;
+                border-left: 3px solid #00d9ff;
+            }
+            .message.error {
+                border-left-color: #e74c3c;
+            }
+            .message.success {
+                border-left-color: #27ae60;
+            }
+
+            /* Connection State */
+            .connection-state {
+                display: inline-block;
+                padding: 5px 10px;
+                border-radius: 15px;
+                font-size: 12px;
+                margin-left: 10px;
+            }
+            .state-new { background: #666; }
+            .state-connecting { background: #f39c12; color: #000; }
+            .state-connected { background: #27ae60; }
+            .state-disconnected { background: #e74c3c; }
+            .state-failed { background: #c0392b; }
+            .state-closed { background: #666; }
+
+            /* Media Controls */
+            .media-controls {
+                display: flex;
+                gap: 10px;
+                margin-top: 10px;
+            }
+            .media-btn {
+                padding: 8px 12px;
+                font-size: 16px;
+            }
+            .media-btn.muted {
+                background: #e74c3c;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Samvaad</h1>
+            <p>WebRTC Video Conferencing</p>
+
+            <div id="status" class="status disconnected">
+                Disconnected
+            </div>
+
+            <div class="controls">
+                <div class="control-row">
+                    <input type="text" id="roomId" placeholder="Room ID" value="test-room-123">
+                    <button onclick="connect()" id="connectBtn">Connect</button>
+                    <button onclick="startMedia()" id="mediaBtn" disabled>Start Camera</button>
+                    <button onclick="joinRoom()" id="joinBtn" disabled>Join Room</button>
+                    <button onclick="leaveRoom()" id="leaveBtn" disabled class="danger">Leave Room</button>
+                </div>
+                <div class="control-row">
+                    <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" id="audioOnly"> Audio only (no camera)
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; margin-left: 15px;">
+                        <input type="checkbox" id="testMode"> Test mode (no media)
+                    </label>
+                </div>
+                <div class="control-row">
+                    <span>WebRTC State: </span>
+                    <span id="rtcState" class="connection-state state-new">Not Started</span>
+                </div>
+            </div>
+
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <h3>Local Video (You)</h3>
+                    <video id="localVideo" autoplay muted playsinline></video>
+                    <div class="media-controls">
+                        <button class="media-btn" id="toggleVideo" onclick="toggleVideo()" disabled>Video Off</button>
+                        <button class="media-btn" id="toggleAudio" onclick="toggleAudio()" disabled>Mute</button>
+                    </div>
+                </div>
+                <div class="video-wrapper">
+                    <h3>Remote Video (Peer)</h3>
+                    <video id="remoteVideo" autoplay playsinline></video>
+                    <div id="remotePlaceholder" class="video-placeholder">
+                        Waiting for peer to connect...
+                    </div>
+                </div>
+            </div>
+
+            <details open>
+                <summary style="cursor: pointer; color: #00d9ff;">Event Log</summary>
+                <div class="messages" id="messages"></div>
+                <button onclick="clearLog()" style="margin-top: 5px;">Clear Log</button>
+            </details>
+        </div>
+
+        <script>
+            // ============================================
+            // State Variables
+            // ============================================
+            let ws = null;
+            let myUserId = null;
+            let currentRoomId = null;
+            let localStream = null;
+            let peerConnection = null;
+            let remotePeerId = null;
+            let iceCandidateQueue = []; // Queue for ICE candidates received before remote description
+
+            // ============================================
+            // WebRTC Configuration
+            // ============================================
+            const rtcConfig = {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
+                ]
+            };
+
+            // ============================================
+            // Logging & UI Updates
+            // ============================================
+            function log(message, type = 'info') {
+                const messagesDiv = document.getElementById('messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
+
+                const timestamp = new Date().toLocaleTimeString();
+                const icons = {
+                    'send': 'SEND',
+                    'receive': 'RECV',
+                    'info': 'INFO',
+                    'error': 'ERR',
+                    'success': 'OK',
+                    'webrtc': 'RTC'
+                };
+
+                messageDiv.innerHTML = `<strong>[${timestamp}] [${icons[type] || 'INFO'}]</strong> ${message}`;
+                messagesDiv.appendChild(messageDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+
+            function updateStatus(connected) {
+                const statusDiv = document.getElementById('status');
+                if (connected) {
+                    statusDiv.className = 'status connected';
+                    statusDiv.innerHTML = 'Connected' + (myUserId ? ` (ID: ${myUserId.substring(0, 8)}...)` : '');
+                } else {
+                    statusDiv.className = 'status disconnected';
+                    statusDiv.innerHTML = 'Disconnected';
+                }
+            }
+
+            function updateRtcState(state) {
+                const stateEl = document.getElementById('rtcState');
+                stateEl.textContent = state;
+                stateEl.className = 'connection-state state-' + state.toLowerCase().replace(' ', '-');
+            }
+
+            function updateButtons() {
+                const connected = ws && ws.readyState === WebSocket.OPEN;
+                const hasMedia = localStream !== null;
+                const inRoom = currentRoomId !== null;
+                const testMode = document.getElementById('testMode').checked;
+
+                document.getElementById('connectBtn').disabled = connected;
+                document.getElementById('mediaBtn').disabled = !connected || hasMedia || testMode;
+                // In test mode, allow joining without media
+                document.getElementById('joinBtn').disabled = !connected || (!hasMedia && !testMode) || inRoom;
+                document.getElementById('leaveBtn').disabled = !connected || !inRoom;
+                document.getElementById('toggleVideo').disabled = !hasMedia;
+                document.getElementById('toggleAudio').disabled = !hasMedia;
+            }
+
+            // Update buttons when checkboxes change
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('testMode').addEventListener('change', updateButtons);
+                document.getElementById('audioOnly').addEventListener('change', updateButtons);
+            });
+
+            function clearLog() {
+                document.getElementById('messages').innerHTML = '';
+            }
+
+            // ============================================
+            // WebSocket Connection
+            // ============================================
+            function connect() {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    log('Already connected!', 'info');
+                    return;
+                }
+
+                // Auto-detect protocol (ws or wss) based on page protocol
+                const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    log('WebSocket connection established', 'success');
+                    updateStatus(true);
+                    updateButtons();
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        handleSignalingMessage(msg);
+                    } catch (error) {
+                        log('Error parsing message: ' + error.message, 'error');
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    log('WebSocket error occurred', 'error');
+                    console.error('WebSocket error:', error);
+                };
+
+                ws.onclose = () => {
+                    log('WebSocket connection closed', 'info');
+                    updateStatus(false);
+                    myUserId = null;
+                    currentRoomId = null;
+                    cleanupPeerConnection();
+                    updateButtons();
+                };
+            }
+
+            // ============================================
+            // Signaling Message Handler
+            // ============================================
+            function handleSignalingMessage(msg) {
+                log(`Received: ${msg.type}` + (msg.from ? ` from ${msg.from.substring(0, 8)}...` : ''), 'receive');
+                console.log('Full message:', msg);
+
+                switch (msg.type) {
+                    case 'user-joined':
+                        handleUserJoined(msg);
+                        break;
+
+                    case 'user-left':
+                        handleUserLeft(msg);
+                        break;
+
+                    case 'offer':
+                        handleOffer(msg.from, msg.payload);
+                        break;
+
+                    case 'answer':
+                        handleAnswer(msg.payload);
+                        break;
+
+                    case 'ice-candidate':
+                        handleIceCandidate(msg.payload);
+                        break;
+
+                    case 'error':
+                        const errorPayload = msg.payload || {};
+                        log(`Error: ${errorPayload.message}`, 'error');
+                        break;
+
+                    default:
+                        log(`Unknown message type: ${msg.type}`, 'info');
+                }
+            }
+
+            function handleUserJoined(msg) {
+                const payload = msg.payload || {};
+
+                // Check if this is our own join confirmation (has otherUsers field)
+                if (payload.otherUsers !== undefined) {
+                    // This is my join confirmation
+                    myUserId = payload.userId;
+                    updateStatus(true);
+
+                    if (payload.otherUsers.length > 0) {
+                        log(`Joined room. Other users: ${payload.otherUsers.length}`, 'success');
+                        // If there's another user, we initiate the call
+                        // The user who joins later initiates the call
+                        const peerId = payload.otherUsers[0];
+                        log(`Initiating call to peer: ${peerId.substring(0, 8)}...`, 'webrtc');
+                        initiateCall(peerId);
+                    } else {
+                        log('Joined room. Waiting for others to join...', 'success');
+                    }
+                } else {
+                    // This is a notification that someone else joined
+                    log(`User joined: ${payload.userId.substring(0, 8)}...`, 'info');
+                    // The new user will initiate the call to us, so we wait
+                }
+            }
+
+            function handleUserLeft(msg) {
+                const payload = msg.payload || {};
+                if (payload.userId) {
+                    log(`User left: ${payload.userId.substring(0, 8)}...`, 'info');
+                    if (payload.userId === remotePeerId) {
+                        cleanupPeerConnection();
+                        document.getElementById('remotePlaceholder').style.display = 'flex';
+                        document.getElementById('remoteVideo').style.display = 'none';
+                    }
+                }
+            }
+
+            // ============================================
+            // Media Functions
+            // ============================================
+            async function startMedia() {
+                const audioOnly = document.getElementById('audioOnly').checked;
+
+                const constraints = {
+                    video: !audioOnly,
+                    audio: true
+                };
+
+                try {
+                    log(`Requesting ${audioOnly ? 'microphone' : 'camera and microphone'} access...`, 'info');
+                    localStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                    document.getElementById('localVideo').srcObject = localStream;
+                    log(`${audioOnly ? 'Microphone' : 'Camera and microphone'} started`, 'success');
+                    updateButtons();
+                } catch (err) {
+                    log(`Failed to get media: ${err.message}`, 'error');
+                    console.error('getUserMedia error:', err);
+
+                    // If video failed, try audio only as fallback
+                    if (!audioOnly && err.name === 'NotReadableError') {
+                        log('Camera in use. Trying audio only...', 'info');
+                        try {
+                            localStream = await navigator.mediaDevices.getUserMedia({
+                                video: false,
+                                audio: true
+                            });
+                            document.getElementById('localVideo').srcObject = localStream;
+                            log('Audio only mode activated (camera unavailable)', 'success');
+                            document.getElementById('audioOnly').checked = true;
+                            updateButtons();
+                        } catch (audioErr) {
+                            log(`Audio also failed: ${audioErr.message}`, 'error');
+                        }
+                    }
+                }
+            }
+
+            function toggleVideo() {
+                if (!localStream) return;
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    const btn = document.getElementById('toggleVideo');
+                    btn.textContent = videoTrack.enabled ? 'Video Off' : 'Video On';
+                    btn.classList.toggle('muted', !videoTrack.enabled);
+                    log(`Video ${videoTrack.enabled ? 'enabled' : 'disabled'}`, 'info');
+                }
+            }
+
+            function toggleAudio() {
+                if (!localStream) return;
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    const btn = document.getElementById('toggleAudio');
+                    btn.textContent = audioTrack.enabled ? 'Mute' : 'Unmute';
+                    btn.classList.toggle('muted', !audioTrack.enabled);
+                    log(`Audio ${audioTrack.enabled ? 'enabled' : 'disabled'}`, 'info');
+                }
+            }
+
+            // ============================================
+            // Room Management
+            // ============================================
+            function joinRoom() {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    log('Not connected! Click Connect first.', 'error');
+                    return;
+                }
+
+                const testMode = document.getElementById('testMode').checked;
+                if (!localStream && !testMode) {
+                    log('Please start camera first! (or enable Test Mode)', 'error');
+                    return;
+                }
+
+                const roomId = document.getElementById('roomId').value;
+                if (!roomId) {
+                    log('Please enter a room ID', 'error');
+                    return;
+                }
+
+                if (testMode) {
+                    log('Joining in TEST MODE (no media)', 'info');
+                }
+
+                currentRoomId = roomId;
+                const message = {
+                    type: 'join',
+                    roomId: roomId
+                };
+
+                ws.send(JSON.stringify(message));
+                log(`Joining room: ${roomId}`, 'send');
+                updateButtons();
+            }
+
+            function leaveRoom() {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    log('Not connected!', 'error');
+                    return;
+                }
+
+                const message = {
+                    type: 'leave'
+                };
+
+                ws.send(JSON.stringify(message));
+                log('Leaving room', 'send');
+
+                currentRoomId = null;
+                cleanupPeerConnection();
+                document.getElementById('remotePlaceholder').style.display = 'flex';
+                document.getElementById('remoteVideo').style.display = 'none';
+                updateButtons();
+            }
+
+            // ============================================
+            // WebRTC Peer Connection
+            // ============================================
+            function createPeerConnection() {
+                if (peerConnection) {
+                    log('Peer connection already exists', 'webrtc');
+                    return;
+                }
+
+                const testMode = document.getElementById('testMode').checked;
+                log('Creating new peer connection' + (testMode ? ' (test mode)' : ''), 'webrtc');
+                peerConnection = new RTCPeerConnection(rtcConfig);
+
+                // Add local tracks to the connection (if we have media)
+                if (localStream) {
+                    localStream.getTracks().forEach(track => {
+                        log(`Adding local track: ${track.kind}`, 'webrtc');
+                        peerConnection.addTrack(track, localStream);
+                    });
+                } else if (testMode) {
+                    log('Test mode: No local tracks added', 'webrtc');
+                }
+
+                // Handle incoming tracks from remote peer
+                peerConnection.ontrack = (event) => {
+                    log(`Received remote track: ${event.track.kind}`, 'webrtc');
+                    const remoteVideo = document.getElementById('remoteVideo');
+                    const placeholder = document.getElementById('remotePlaceholder');
+
+                    if (event.streams && event.streams[0]) {
+                        remoteVideo.srcObject = event.streams[0];
+                        remoteVideo.style.display = 'block';
+                        placeholder.style.display = 'none';
+                    }
+                };
+
+                // Handle ICE candidates
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate && remotePeerId) {
+                        log(`Sending ICE candidate`, 'webrtc');
+                        ws.send(JSON.stringify({
+                            type: 'ice-candidate',
+                            to: remotePeerId,
+                            payload: event.candidate
+                        }));
+                    }
+                };
+
+                // Monitor ICE connection state
+                peerConnection.oniceconnectionstatechange = () => {
+                    const state = peerConnection.iceConnectionState;
+                    log(`ICE connection state: ${state}`, 'webrtc');
+                    updateRtcState(state);
+                };
+
+                // Monitor overall connection state
+                peerConnection.onconnectionstatechange = () => {
+                    const state = peerConnection.connectionState;
+                    log(`Connection state: ${state}`, 'webrtc');
+
+                    if (state === 'failed') {
+                        log('Connection failed. Try rejoining the room.', 'error');
+                    }
+                };
+
+                // Monitor signaling state
+                peerConnection.onsignalingstatechange = () => {
+                    log(`Signaling state: ${peerConnection.signalingState}`, 'webrtc');
+                };
+
+                updateRtcState('new');
+            }
+
+            function cleanupPeerConnection() {
+                if (peerConnection) {
+                    log('Cleaning up peer connection', 'webrtc');
+                    peerConnection.close();
+                    peerConnection = null;
+                }
+                remotePeerId = null;
+                iceCandidateQueue = [];
+                updateRtcState('closed');
+            }
+
+            // ============================================
+            // WebRTC Signaling: Offer/Answer/ICE
+            // ============================================
+            async function initiateCall(peerId) {
+                remotePeerId = peerId;
+                createPeerConnection();
+
+                try {
+                    log('Creating offer...', 'webrtc');
+                    const offer = await peerConnection.createOffer();
+
+                    log('Setting local description (offer)', 'webrtc');
+                    await peerConnection.setLocalDescription(offer);
+
+                    log(`Sending offer to ${peerId.substring(0, 8)}...`, 'send');
+                    ws.send(JSON.stringify({
+                        type: 'offer',
+                        to: peerId,
+                        payload: offer
+                    }));
+                } catch (err) {
+                    log(`Error creating offer: ${err.message}`, 'error');
+                    console.error('createOffer error:', err);
+                }
+            }
+
+            async function handleOffer(from, offer) {
+                log(`Received offer from ${from.substring(0, 8)}...`, 'webrtc');
+                remotePeerId = from;
+                createPeerConnection();
+
+                try {
+                    log('Setting remote description (offer)', 'webrtc');
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+                    // Process any queued ICE candidates
+                    await processIceCandidateQueue();
+
+                    log('Creating answer...', 'webrtc');
+                    const answer = await peerConnection.createAnswer();
+
+                    log('Setting local description (answer)', 'webrtc');
+                    await peerConnection.setLocalDescription(answer);
+
+                    log(`Sending answer to ${from.substring(0, 8)}...`, 'send');
+                    ws.send(JSON.stringify({
+                        type: 'answer',
+                        to: from,
+                        payload: answer
+                    }));
+                } catch (err) {
+                    log(`Error handling offer: ${err.message}`, 'error');
+                    console.error('handleOffer error:', err);
+                }
+            }
+
+            async function handleAnswer(answer) {
+                log('Received answer', 'webrtc');
+
+                if (!peerConnection) {
+                    log('No peer connection exists for answer', 'error');
+                    return;
+                }
+
+                try {
+                    log('Setting remote description (answer)', 'webrtc');
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+
+                    // Process any queued ICE candidates
+                    await processIceCandidateQueue();
+                } catch (err) {
+                    log(`Error handling answer: ${err.message}`, 'error');
+                    console.error('handleAnswer error:', err);
+                }
+            }
+
+            async function handleIceCandidate(candidate) {
+                if (!candidate) return;
+
+                // If we don't have a remote description yet, queue the candidate
+                if (!peerConnection || !peerConnection.remoteDescription || !peerConnection.remoteDescription.type) {
+                    log('Queueing ICE candidate (no remote description yet)', 'webrtc');
+                    iceCandidateQueue.push(candidate);
+                    return;
+                }
+
+                try {
+                    log('Adding ICE candidate', 'webrtc');
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (err) {
+                    log(`Error adding ICE candidate: ${err.message}`, 'error');
+                    console.error('addIceCandidate error:', err);
+                }
+            }
+
+            async function processIceCandidateQueue() {
+                if (iceCandidateQueue.length === 0) return;
+
+                log(`Processing ${iceCandidateQueue.length} queued ICE candidates`, 'webrtc');
+
+                for (const candidate of iceCandidateQueue) {
+                    try {
+                        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                    } catch (err) {
+                        log(`Error adding queued ICE candidate: ${err.message}`, 'error');
+                    }
+                }
+
+                iceCandidateQueue = [];
+            }
+
+            // ============================================
+            // Initialization
+            // ============================================
+            window.onload = () => {
+                log('Samvaad loaded. Click Connect to start.', 'info');
+                document.getElementById('remoteVideo').style.display = 'none';
+                updateButtons();
+            };
+
+            // Cleanup on page unload
+            window.onbeforeunload = () => {
+                if (peerConnection) {
+                    peerConnection.close();
+                }
+                if (ws) {
+                    ws.close();
+                }
+            };
+        </script>
+    </body>
+</html>

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -21,6 +23,12 @@ var upgrader = websocket.Upgrader{
 }
 
 func main() {
+	// Command line flags
+	port := flag.String("port", "8080", "Server port")
+	certFile := flag.String("cert", "", "Path to TLS certificate file")
+	keyFile := flag.String("key", "", "Path to TLS key file")
+	flag.Parse()
+
 	appLogger := logger.NewLogger()
 	slog.SetDefault(appLogger)
 
@@ -30,9 +38,7 @@ func main() {
 	go hub.Run()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		//fmt.Fprintf(w, "Welcome to the root!")
-		//http.ServeFile(w, r, "/home/varun/projects/git_projects/samvaad/backend/test.html")
-		http.ServeFile(w, r, "../../test-room.html")
+		http.ServeFile(w, r, "../../room.html")
 	})
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		handleWebSocket(hub, w, r)
@@ -43,9 +49,34 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	slog.Info("server starting on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		slog.Error("error while starting the HTTP server", "error", err.Error())
+	addr := ":" + *port
+
+	// Check if certs exist in default location
+	if *certFile == "" && *keyFile == "" {
+		defaultCert := "../../certs/cert.pem"
+		defaultKey := "../../certs/key.pem"
+		if _, err := os.Stat(defaultCert); err == nil {
+			if _, err := os.Stat(defaultKey); err == nil {
+				*certFile = defaultCert
+				*keyFile = defaultKey
+			}
+		}
+	}
+
+	// Start HTTPS if certs are available, otherwise HTTP
+	if *certFile != "" && *keyFile != "" {
+		slog.Info("server starting with HTTPS", "port", *port)
+		slog.Info("open https://localhost:" + *port + " in your browser")
+		if err := http.ListenAndServeTLS(addr, *certFile, *keyFile, nil); err != nil {
+			slog.Error("error while starting HTTPS server", "error", err.Error())
+		}
+	} else {
+		slog.Info("server starting with HTTP (no TLS certs found)", "port", *port)
+		slog.Info("open http://localhost:" + *port + " in your browser")
+		slog.Info("TIP: For camera access on other devices, generate certs with: ./scripts/generate-certs.sh")
+		if err := http.ListenAndServe(addr, nil); err != nil {
+			slog.Error("error while starting HTTP server", "error", err.Error())
+		}
 	}
 }
 
