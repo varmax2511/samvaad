@@ -50,14 +50,14 @@ func (c *Client) ReadMessages() {
 		_, messageData, err := c.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				slog.Error("read message connection error: %v", err)
+				slog.Error("read message connection error: %v", "error", err)
 			}
 			break
 		}
 
 		var message Message
 		if err := json.Unmarshal(messageData, &message); err != nil {
-			slog.Error("error unmarshaling messag: %v", err)
+			slog.Error("error unmarshaling messag: %v", "error", err)
 			continue
 		}
 
@@ -84,7 +84,7 @@ func (c *Client) WriteMessages() {
 
 			writer, err := c.Conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-				slog.Error("errow while instantiating a writer for messages %v", err)
+				slog.Error("errow while instantiating a writer for messages %v", "error", err)
 			}
 			writer.Write(message)
 

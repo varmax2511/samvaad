@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Room Management Test</title>
+        <style>
+            body {font-family: Arial; padding: 20px;}
+            .status { padding: 10px; margin: 10px 0; border-radius: 5px;}
+            .connected {background: #d4edda;}
+            .disconnected {background: #f8d7da;}
+            .messages { 
+                border: 1px solid #ddd; 
+                padding: 10px; 
+                height: 300px; 
+                overflow-y: auto;
+                margin: 10px 0;
+            }
+            .message { 
+                padding: 5px; 
+                margin: 5px 0; 
+                background: #f0f0f0;
+                border-radius: 3px;
+            }
+            button { 
+                padding: 10px 15px; 
+                margin: 5px; 
+                cursor: pointer;
+                border: none;
+                border-radius: 5px;
+                background: #007bff;
+                color: white;
+            }
+            button:hover { background: #0056b3; }
+            input { padding: 8px; margin: 5px; border-radius: 5px; border: 1px solid #ddd; }
+        </style>
+    </head>
+    <body>
+        <h1>Websocket Room Test</h1>
+        <div id="status" class="status disconnected">
+            Disconnected
+        </div>
+
+        <div>
+            <input type="text" id="roomId" placeholder="Room ID" value="test-room-123">
+            <button onclick="connect()">Connect</button>
+            <button onclick="joinRoom()">Join Room</button>
+            <button onclick="leaveRoom()">Leave Room</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        <div class="messages" id="messages"></div>
+        <script>
+            let ws;
+            let myUserId = null;
+
+            function log(message, type = 'info') {
+                const messagesDiv = document.getElementById('messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+
+                const timestamp = new Date().toLocaleTimeString();
+                const icon = type === 'send' ? '📤' : type === 'receive' ? '📨' : 'ℹ️';
+
+                messageDiv.innerHTML = `<strong>${timestamp} ${icon}</strong> ${message}`;
+                messagesDiv.appendChild(messageDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+
+            function updateStatus(connected){
+                const statusDiv = document.getElementById('status');
+                if (connected) {
+                    statusDiv.className = 'status connected'
+                    statusDiv.innerHTML = '✅ Connected' + (myUserId ? ` (ID: ${myUserId.substring(0, 8)}...)` : '');
+                } else {
+                    statusDiv.className = 'status disconnected';
+                    statusDiv.innerHTML = '❌ Disconnected';
+                }
+            }
+
+            function connect(){
+                if (ws && ws.readyState == WebSocket.OPEN){
+                    log('Already connected!', 'info');
+                    return;
+                }
+
+                ws = new WebSocket('ws://localhost:8080/ws');
+                ws.onopen = () => {
+                    log('Websocket connection established', 'info');
+                    updateStatus(true);
+                };
+
+                ws.onmessage = (event) => {
+                    try{
+                        const msg = JSON.parse(event.data);
+                        log(`Received: ${msg.type} from ${msg.from || 'server'}`, 'receive');
+
+                        // log message
+                        console.log('Full message:', msg);
+
+                        // handle different message types
+                        switch(msg.type){
+                            case 'user-joined':
+                                const payload = msg.payload || '{}';
+                                if(payload.userId) {
+                                    myUserId = payload.userId;
+                                    updateStatus(true);
+                                }
+
+                                if (payload.users && payload.users.length > 0) {
+                                    log(`Other users in room: ${payload.users.join(', ')}`, 'info');
+                                } else {
+                                    log('You are alone in the room', 'info');
+                                }
+                                break;
+                            case 'user-left':
+                                const leftPayload = msg.payload || {};
+                                if (leftPayload.userId) {
+                                    log(`👋 User left: ${leftPayload.userId.substring(0, 8)}...`, 'info');
+                                }
+                                break;
+                            case 'error':
+                                const errorPayload = msg.payload || '{}';
+                                log(`❌ Error: ${errorPayload.message}`, 'info');
+                                break;
+
+                            default:
+                                log(`📦 Received: ${msg.type}`, 'info');
+                            }
+                    } catch(error){
+                        log('Error parsing message: ' + error.message, 'info');
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    log('WebSocket error occurred', 'info');
+                    console.error('WebSocket error:', error);
+                };
+            
+                ws.onclose = () => {
+                    log('WebSocket connection closed', 'info');
+                    updateStatus(false);
+                    myUserId = null;
+                };
+            }
+
+            function joinRoom() {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    log('❌ Not connected! Click Connect first.', 'info');
+                    return;
+                }
+
+                const roomId = document.getElementById('roomId').value;
+                if (!roomId) {
+                    log('❌ Please enter a room ID', 'info');
+                    return;
+                }
+
+                const message = {
+                    type: 'join',
+                    roomId: roomId
+                };
+
+                ws.send(JSON.stringify(message));
+                log(`Sent join request for room: ${roomId}`, 'send');
+            }
+
+            function leaveRoom() {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    log('❌ Not connected!', 'info');
+                    return;
+                }
+
+                const message = {
+                    type: 'leave'
+                };
+
+                ws.send(JSON.stringify(message));
+                log('Sent leave request', 'send');
+            }
+
+            function clearLog() {
+                document.getElementById('messages').innerHTML = '';
+            }
+
+            // Auto-connect on page load
+            window.onload = () => {
+                log('Page loaded. Click Connect to start.', 'info');
+            };
+        </script>
+    </body>
+</html>

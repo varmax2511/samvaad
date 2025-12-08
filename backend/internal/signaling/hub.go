@@ -40,7 +40,7 @@ func (h *Hub) Run() {
 			h.mu.Lock()
 			h.Clients[client.ID] = client
 			h.mu.Unlock()
-			slog.Info("client registeredL %s", client.ID)
+			slog.Info("client registered", "clientID", client.ID)
 
 		case client := <-h.Unregister:
 			h.mu.Lock()
