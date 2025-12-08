@@ -32,7 +32,7 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		//fmt.Fprintf(w, "Welcome to the root!")
 		//http.ServeFile(w, r, "/home/varun/projects/git_projects/samvaad/backend/test.html")
-		http.ServeFile(w, r, "../backend/test-room.html")
+		http.ServeFile(w, r, "../../test-room.html")
 	})
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		handleWebSocket(hub, w, r)

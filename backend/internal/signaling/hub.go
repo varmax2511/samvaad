@@ -53,6 +53,7 @@ func (h *Hub) Run() {
 				close(client.Send)
 				slog.Info("client unregistered", "clientID", client.ID)
 			}
+		h.mu.Unlock()
 
 		case message := <-h.Broadcast:
 			h.handleMessage(message)
@@ -187,7 +188,7 @@ func (h *Hub) leaveRoom(client *Client) {
 
 	// remove client from room
 	if room, exists := h.Rooms[roomId]; exists {
-		delete(room, roomId)
+		delete(room, client.ID)
 
 		// notify other users
 		leftMessage := Message{
