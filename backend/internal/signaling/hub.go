@@ -192,7 +192,7 @@ func (h *Hub) leaveRoom(client *Client) {
 
 		// notify other users
 		leftMessage := Message{
-			Type:   MessageTypeLeave,
+			Type:   MessageTypeUserLeft,
 			RoomID: roomId,
 			From:   client.ID,
 		}

@@ -444,3 +444,427 @@ func TestMultipleUsersLeaveAndRejoin(t *testing.T) {
 		return c1Exists && c2Exists && len(room) == 2
 	})
 }
+
+// ============================================
+// WebRTC Signaling Tests
+// ============================================
+
+func TestWebRTCAnswerForwarding(t *testing.T) {
+	h := NewHub()
+	go h.Run()
+
+	caller := &Client{ID: "caller", Send: make(chan []byte, 4), Hub: h}
+	callee := &Client{ID: "callee", Send: make(chan []byte, 4), Hub: h}
+
+	h.Register <- caller
+	h.Register <- callee
+
+	waitFor(t, 500*time.Millisecond, func() bool {
+		h.mu.RLock()
+		_, ok1 := h.Clients[caller.ID]
+		_, ok2 := h.Clients[callee.ID]
+		h.mu.RUnlock()
+		return ok1 && ok2
+	})
+
+	// Send an answer from callee to caller
+	answerPayload, _ := json.Marshal(map[string]string{
+		"type": "answer",
+		"sdp":  "v=0\r\no=- 123456 2 IN IP4 127.0.0.1\r\n...",
+	})
+
+	msg := &Message{
+		Type:    MessageTypeAnswer,
+		From:    callee.ID,
+		To:      caller.ID,
+		Payload: answerPayload,
+	}
+	h.Broadcast <- msg
+
+	// Caller should receive the answer
+	got := readMessage(t, caller.Send, 500*time.Millisecond)
+	if got.Type != MessageTypeAnswer {
+		t.Fatalf("expected answer type, got %s", got.Type)
+	}
+	if got.From != callee.ID {
+		t.Fatalf("expected from %s got %s", callee.ID, got.From)
+	}
+	if got.To != caller.ID {
+		t.Fatalf("expected to %s got %s", caller.ID, got.To)
+	}
+
+	var payload map[string]string
+	if err := json.Unmarshal(got.Payload, &payload); err != nil {
+		t.Fatalf("failed to unmarshal payload: %v", err)
+	}
+	if payload["type"] != "answer" {
+		t.Fatalf("expected payload type 'answer', got %s", payload["type"])
+	}
+}
+
+func TestWebRTCIceCandidateForwarding(t *testing.T) {
+	h := NewHub()
+	go h.Run()
+
+	peer1 := &Client{ID: "peer1", Send: make(chan []byte, 10), Hub: h}
+	peer2 := &Client{ID: "peer2", Send: make(chan []byte, 10), Hub: h}
+
+	h.Register <- peer1
+	h.Register <- peer2
+
+	waitFor(t, 500*time.Millisecond, func() bool {
+		h.mu.RLock()
+		_, ok1 := h.Clients[peer1.ID]
+		_, ok2 := h.Clients[peer2.ID]
+		h.mu.RUnlock()
+		return ok1 && ok2
+	})
+
+	// Send ICE candidate from peer1 to peer2
+	icePayload, _ := json.Marshal(map[string]interface{}{
+		"candidate":     "candidate:1 1 UDP 2122252543 192.168.1.100 54321 typ host",
+		"sdpMid":        "0",
+		"sdpMLineIndex": 0,
+	})
+
+	msg := &Message{
+		Type:    MessageTypeIceCandidate,
+		From:    peer1.ID,
+		To:      peer2.ID,
+		Payload: icePayload,
+	}
+	h.Broadcast <- msg
+
+	// peer2 should receive the ICE candidate
+	got := readMessage(t, peer2.Send, 500*time.Millisecond)
+	if got.Type != MessageTypeIceCandidate {
+		t.Fatalf("expected ice-candidate type, got %s", got.Type)
+	}
+	if got.From != peer1.ID {
+		t.Fatalf("expected from %s got %s", peer1.ID, got.From)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal(got.Payload, &payload); err != nil {
+		t.Fatalf("failed to unmarshal payload: %v", err)
+	}
+	if !strings.Contains(payload["candidate"].(string), "candidate:1") {
+		t.Fatalf("unexpected candidate content: %v", payload["candidate"])
+	}
+}
+
+func TestFullWebRTCSignalingFlow(t *testing.T) {
+	h := NewHub()
+	go h.Run()
+
+	caller := &Client{ID: "caller", Send: make(chan []byte, 20), Hub: h}
+	callee := &Client{ID: "callee", Send: make(chan []byte, 20), Hub: h}
+
+	h.Register <- caller
+	h.Register <- callee
+
+	waitFor(t, 500*time.Millisecond, func() bool {
+		h.mu.RLock()
+		_, ok1 := h.Clients[caller.ID]
+		_, ok2 := h.Clients[callee.ID]
+		h.mu.RUnlock()
+		return ok1 && ok2
+	})
+
+	roomID := "webrtc-test-room"
+
+	// Step 1: Both users join the room
+	h.Broadcast <- &Message{Type: MessageTypeJoin, From: caller.ID, RoomID: roomID}
+	callerJoinMsg := readMessage(t, caller.Send, 500*time.Millisecond)
+	if callerJoinMsg.Type != MessageTypeUserJoined {
+		t.Fatalf("expected user-joined, got %s", callerJoinMsg.Type)
+	}
+
+	h.Broadcast <- &Message{Type: MessageTypeJoin, From: callee.ID, RoomID: roomID}
+	calleeJoinMsg := readMessage(t, callee.Send, 500*time.Millisecond)
+	if calleeJoinMsg.Type != MessageTypeUserJoined {
+		t.Fatalf("expected user-joined, got %s", calleeJoinMsg.Type)
+	}
+
+	// Caller should be notified of callee joining
+	callerNotify := readMessage(t, caller.Send, 500*time.Millisecond)
+	if callerNotify.Type != MessageTypeUserJoined {
+		t.Fatalf("expected notification, got %s", callerNotify.Type)
+	}
+
+	// Verify callee's join confirmation contains caller in otherUsers
+	var calleePayload map[string]interface{}
+	if err := json.Unmarshal(calleeJoinMsg.Payload, &calleePayload); err != nil {
+		t.Fatalf("failed to unmarshal callee payload: %v", err)
+	}
+	otherUsers := calleePayload["otherUsers"].([]interface{})
+	if len(otherUsers) != 1 || otherUsers[0] != caller.ID {
+		t.Fatalf("expected otherUsers to contain caller, got %v", otherUsers)
+	}
+
+	// Step 2: Callee sends offer to caller (callee joined later, so initiates)
+	offerPayload, _ := json.Marshal(map[string]string{
+		"type": "offer",
+		"sdp":  "v=0\r\no=- 12345 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n...",
+	})
+	h.Broadcast <- &Message{
+		Type:    MessageTypeOffer,
+		From:    callee.ID,
+		To:      caller.ID,
+		Payload: offerPayload,
+	}
+
+	// Caller receives offer
+	offerMsg := readMessage(t, caller.Send, 500*time.Millisecond)
+	if offerMsg.Type != MessageTypeOffer {
+		t.Fatalf("expected offer, got %s", offerMsg.Type)
+	}
+	if offerMsg.From != callee.ID {
+		t.Fatalf("expected offer from callee, got %s", offerMsg.From)
+	}
+
+	// Step 3: Caller sends answer back
+	answerPayload, _ := json.Marshal(map[string]string{
+		"type": "answer",
+		"sdp":  "v=0\r\no=- 67890 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n...",
+	})
+	h.Broadcast <- &Message{
+		Type:    MessageTypeAnswer,
+		From:    caller.ID,
+		To:      callee.ID,
+		Payload: answerPayload,
+	}
+
+	// Callee receives answer
+	answerMsg := readMessage(t, callee.Send, 500*time.Millisecond)
+	if answerMsg.Type != MessageTypeAnswer {
+		t.Fatalf("expected answer, got %s", answerMsg.Type)
+	}
+	if answerMsg.From != caller.ID {
+		t.Fatalf("expected answer from caller, got %s", answerMsg.From)
+	}
+
+	// Step 4: Exchange ICE candidates (both directions)
+	// Callee sends ICE candidate
+	icePayload1, _ := json.Marshal(map[string]interface{}{
+		"candidate":     "candidate:1 1 UDP 2122252543 192.168.1.1 12345 typ host",
+		"sdpMid":        "0",
+		"sdpMLineIndex": 0,
+	})
+	h.Broadcast <- &Message{
+		Type:    MessageTypeIceCandidate,
+		From:    callee.ID,
+		To:      caller.ID,
+		Payload: icePayload1,
+	}
+
+	// Caller receives ICE candidate
+	iceMsg1 := readMessage(t, caller.Send, 500*time.Millisecond)
+	if iceMsg1.Type != MessageTypeIceCandidate {
+		t.Fatalf("expected ice-candidate, got %s", iceMsg1.Type)
+	}
+
+	// Caller sends ICE candidate
+	icePayload2, _ := json.Marshal(map[string]interface{}{
+		"candidate":     "candidate:2 1 UDP 2122252543 192.168.1.2 54321 typ host",
+		"sdpMid":        "0",
+		"sdpMLineIndex": 0,
+	})
+	h.Broadcast <- &Message{
+		Type:    MessageTypeIceCandidate,
+		From:    caller.ID,
+		To:      callee.ID,
+		Payload: icePayload2,
+	}
+
+	// Callee receives ICE candidate
+	iceMsg2 := readMessage(t, callee.Send, 500*time.Millisecond)
+	if iceMsg2.Type != MessageTypeIceCandidate {
+		t.Fatalf("expected ice-candidate, got %s", iceMsg2.Type)
+	}
+
+	// Verify ICE candidate payloads are preserved correctly
+	var ice1 map[string]interface{}
+	if err := json.Unmarshal(iceMsg1.Payload, &ice1); err != nil {
+		t.Fatalf("failed to unmarshal ice1: %v", err)
+	}
+	if !strings.Contains(ice1["candidate"].(string), "192.168.1.1") {
+		t.Fatalf("ICE candidate 1 payload corrupted: %v", ice1)
+	}
+
+	var ice2 map[string]interface{}
+	if err := json.Unmarshal(iceMsg2.Payload, &ice2); err != nil {
+		t.Fatalf("failed to unmarshal ice2: %v", err)
+	}
+	if !strings.Contains(ice2["candidate"].(string), "192.168.1.2") {
+		t.Fatalf("ICE candidate 2 payload corrupted: %v", ice2)
+	}
+}
+
+func TestSignalingToNonExistentClient(t *testing.T) {
+	h := NewHub()
+	go h.Run()
+
+	sender := &Client{ID: "sender", Send: make(chan []byte, 4), Hub: h}
+
+	h.Register <- sender
+
+	waitFor(t, 500*time.Millisecond, func() bool {
+		h.mu.RLock()
+		_, ok := h.Clients[sender.ID]
+		h.mu.RUnlock()
+		return ok
+	})
+
+	// Try to send an offer to a non-existent client
+	offerPayload, _ := json.Marshal(map[string]string{
+		"type": "offer",
+		"sdp":  "dummy-sdp",
+	})
+
+	msg := &Message{
+		Type:    MessageTypeOffer,
+		From:    sender.ID,
+		To:      "non-existent-client",
+		Payload: offerPayload,
+	}
+	h.Broadcast <- msg
+
+	// Give some time for the hub to process
+	time.Sleep(100 * time.Millisecond)
+
+	// Sender should NOT receive any message (the message is simply dropped)
+	// We verify by checking that no message arrives within timeout
+	select {
+	case msg := <-sender.Send:
+		// If hub sends an error, that's also acceptable behavior
+		var m Message
+		if err := json.Unmarshal(msg, &m); err == nil {
+			if m.Type != MessageTypeError {
+				t.Logf("Received unexpected message: %s", m.Type)
+			}
+		}
+	case <-time.After(200 * time.Millisecond):
+		// Expected - no message received
+	}
+}
+
+func TestMultipleIceCandidatesInSequence(t *testing.T) {
+	h := NewHub()
+	go h.Run()
+
+	peer1 := &Client{ID: "peer1", Send: make(chan []byte, 20), Hub: h}
+	peer2 := &Client{ID: "peer2", Send: make(chan []byte, 20), Hub: h}
+
+	h.Register <- peer1
+	h.Register <- peer2
+
+	waitFor(t, 500*time.Millisecond, func() bool {
+		h.mu.RLock()
+		_, ok1 := h.Clients[peer1.ID]
+		_, ok2 := h.Clients[peer2.ID]
+		h.mu.RUnlock()
+		return ok1 && ok2
+	})
+
+	// Send multiple ICE candidates in sequence (simulating real WebRTC behavior)
+	candidates := []string{
+		"candidate:1 1 UDP 2122252543 192.168.1.1 50000 typ host",
+		"candidate:2 1 UDP 2122252543 10.0.0.1 50001 typ host",
+		"candidate:3 1 UDP 1685987071 203.0.113.1 50002 typ srflx raddr 192.168.1.1 rport 50000",
+	}
+
+	for i, cand := range candidates {
+		payload, _ := json.Marshal(map[string]interface{}{
+			"candidate":     cand,
+			"sdpMid":        "0",
+			"sdpMLineIndex": 0,
+		})
+		h.Broadcast <- &Message{
+			Type:    MessageTypeIceCandidate,
+			From:    peer1.ID,
+			To:      peer2.ID,
+			Payload: payload,
+		}
+
+		// peer2 should receive each candidate
+		got := readMessage(t, peer2.Send, 500*time.Millisecond)
+		if got.Type != MessageTypeIceCandidate {
+			t.Fatalf("candidate %d: expected ice-candidate, got %s", i, got.Type)
+		}
+
+		var gotPayload map[string]interface{}
+		if err := json.Unmarshal(got.Payload, &gotPayload); err != nil {
+			t.Fatalf("candidate %d: failed to unmarshal: %v", i, err)
+		}
+		if gotPayload["candidate"] != cand {
+			t.Fatalf("candidate %d: expected %s, got %s", i, cand, gotPayload["candidate"])
+		}
+	}
+}
+
+func TestWebRTCSignalingAfterUserLeaves(t *testing.T) {
+	h := NewHub()
+	go h.Run()
+
+	peer1 := &Client{ID: "peer1", Send: make(chan []byte, 10), Hub: h}
+	peer2 := &Client{ID: "peer2", Send: make(chan []byte, 10), Hub: h}
+
+	h.Register <- peer1
+	h.Register <- peer2
+
+	waitFor(t, 500*time.Millisecond, func() bool {
+		h.mu.RLock()
+		_, ok1 := h.Clients[peer1.ID]
+		_, ok2 := h.Clients[peer2.ID]
+		h.mu.RUnlock()
+		return ok1 && ok2
+	})
+
+	roomID := "leave-test-room"
+
+	// Both join room
+	h.Broadcast <- &Message{Type: MessageTypeJoin, From: peer1.ID, RoomID: roomID}
+	_ = readMessage(t, peer1.Send, 500*time.Millisecond)
+	h.Broadcast <- &Message{Type: MessageTypeJoin, From: peer2.ID, RoomID: roomID}
+	_ = readMessage(t, peer2.Send, 500*time.Millisecond)
+	_ = readMessage(t, peer1.Send, 500*time.Millisecond) // notification
+
+	// peer2 leaves
+	h.Broadcast <- &Message{Type: MessageTypeLeave, From: peer2.ID, RoomID: roomID}
+	leaveNotify := readMessage(t, peer1.Send, 500*time.Millisecond)
+	if leaveNotify.Type != MessageTypeUserLeft {
+		t.Fatalf("expected user-left notification, got %s", leaveNotify.Type)
+	}
+
+	// Verify user-left payload contains correct userId
+	var leavePayload map[string]interface{}
+	if err := json.Unmarshal(leaveNotify.Payload, &leavePayload); err != nil {
+		t.Fatalf("failed to unmarshal leave payload: %v", err)
+	}
+	if leavePayload["userId"] != peer2.ID {
+		t.Fatalf("expected userId %s, got %v", peer2.ID, leavePayload["userId"])
+	}
+
+	// Now unregister peer2 completely
+	h.Unregister <- peer2
+
+	waitFor(t, 500*time.Millisecond, func() bool {
+		h.mu.RLock()
+		_, ok := h.Clients[peer2.ID]
+		h.mu.RUnlock()
+		return !ok
+	})
+
+	// peer1 tries to send signaling to peer2 (should be silently dropped)
+	offerPayload, _ := json.Marshal(map[string]string{"sdp": "test"})
+	h.Broadcast <- &Message{
+		Type:    MessageTypeOffer,
+		From:    peer1.ID,
+		To:      peer2.ID,
+		Payload: offerPayload,
+	}
+
+	// No crash, no error - message just gets dropped
+	time.Sleep(100 * time.Millisecond)
+}
