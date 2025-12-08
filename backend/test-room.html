@@ -99,15 +99,21 @@
                         switch(msg.type){
                             case 'user-joined':
                                 const payload = msg.payload || '{}';
-                                if(payload.userId) {
+
+                                // Check if this is our own join confirmation (has otherUsers field)
+                                if (payload.otherUsers !== undefined) {
+                                    // This is my join confirmation
                                     myUserId = payload.userId;
                                     updateStatus(true);
-                                }
 
-                                if (payload.users && payload.users.length > 0) {
-                                    log(`Other users in room: ${payload.users.join(', ')}`, 'info');
+                                    if (payload.otherUsers.length > 0) {
+                                        log(`Other users in room: ${payload.otherUsers.join(', ')}`, 'info');
+                                    } else {
+                                        log('You are alone in the room', 'info');
+                                    }
                                 } else {
-                                    log('You are alone in the room', 'info');
+                                    // This is a notification that someone else joined
+                                    log(`👤 User joined: ${payload.userId.substring(0, 8)}...`, 'info');
                                 }
                                 break;
                             case 'user-left':
