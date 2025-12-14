@@ -27,7 +27,7 @@ func TestClient_ReadMessages_Broadcasts(t *testing.T) {
 			Unregister: make(chan *Client, 1),
 		}
 		// create client and run ReadMessages
-		c := NewClient("test-client-id", hub, conn)
+		c := NewClient("test-client-id", "test-user-id", "testuser", hub, conn)
 		go c.ReadMessages()
 		// expose hub to test
 		hubCh <- hub
@@ -94,7 +94,7 @@ func TestClient_WriteMessages_Sends(t *testing.T) {
 			Unregister: make(chan *Client),
 		}
 		// create client and run WriteMessages
-		c := NewClient("writer-client", hub, conn)
+		c := NewClient("writer-client", "writer-user-id", "writeruser", hub, conn)
 		go c.WriteMessages()
 		// expose client to test so it can send on Send channel
 		clientCh <- c

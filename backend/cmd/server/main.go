@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/varmax2511/samvaad/backend/internal/auth"
 	"github.com/varmax2511/samvaad/backend/internal/logger"
 	"github.com/varmax2511/samvaad/backend/internal/signaling"
 )
@@ -36,6 +37,14 @@ func main() {
 
 	hub := signaling.NewHub()
 	go hub.Run()
+
+	// Setup auth
+	userStore := auth.NewUserStore()
+	authHandler := auth.NewHandler(userStore)
+
+	// Auth endpoints
+	http.HandleFunc("/auth/register", authHandler.Register)
+	http.HandleFunc("/auth/login", authHandler.Login)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "../../room.html")
@@ -81,13 +90,29 @@ func main() {
 }
 
 func handleWebSocket(hub *signaling.Hub, w http.ResponseWriter, r *http.Request) {
+	// extract token from query param
+	tokenString := r.URL.Query().Get("token")
+	if tokenString == "" {
+		http.Error(w, "missing auth token", http.StatusUnauthorized)
+		return
+	}
+
+	// validate token
+	claims, err := auth.ValidateToken(tokenString)
+	if err != nil {
+		http.Error(w, "invalid token", http.StatusUnauthorized)
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		slog.Error("error during connection upgrade to websocket", "error", err.Error())
+		return
 	}
 
+	// client with authenticated user info
 	clientId := uuid.New().String()
-	client := signaling.NewClient(clientId, hub, conn)
+	client := signaling.NewClient(clientId, claims.UserId, claims.Username, hub, conn)
 
 	hub.Register <- client
 	slog.Debug("registered new client", "clientId", clientId)

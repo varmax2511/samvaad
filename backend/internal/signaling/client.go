@@ -16,19 +16,23 @@ const (
 )
 
 type Client struct {
-	ID     string
-	RoomID string
-	Hub    *Hub
-	Conn   *websocket.Conn
-	Send   chan []byte
+	ID       string
+	UserID   string
+	Username string
+	RoomID   string
+	Hub      *Hub
+	Conn     *websocket.Conn
+	Send     chan []byte
 }
 
-func NewClient(id string, hub *Hub, conn *websocket.Conn) *Client {
+func NewClient(id string, userId string, username string, hub *Hub, conn *websocket.Conn) *Client {
 	return &Client{
-		ID:   id,
-		Hub:  hub,
-		Conn: conn,
-		Send: make(chan []byte, 256),
+		ID:       id,
+		UserID:   userId,
+		Username: username,
+		Hub:      hub,
+		Conn:     conn,
+		Send:     make(chan []byte, 256),
 	}
 }
 
@@ -82,21 +86,20 @@ func (c *Client) WriteMessages() {
 				return
 			}
 
-			writer, err := c.Conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				slog.Error("errow while instantiating a writer for messages %v", "error", err)
-			}
-			writer.Write(message)
-
-			// add queued messages
-			for i := 0; i < len(c.Send); i++ {
-				writer.Write([]byte{'\n'})
-				writer.Write(<-c.Send)
-			}
-
-			if err := writer.Close(); err != nil {
-				slog.Error("error while closing the writer", slog.Any("err", err))
+			// Send each message as a separate WebSocket frame
+			if err := c.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
+				slog.Error("error while writing message", slog.Any("err", err))
 				return
+			}
+
+			// Send any queued messages as separate frames
+			n := len(c.Send)
+			for i := 0; i < n; i++ {
+				msg := <-c.Send
+				if err := c.Conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+					slog.Error("error while writing queued message", slog.Any("err", err))
+					return
+				}
 			}
 
 		case <-ticker.C:
