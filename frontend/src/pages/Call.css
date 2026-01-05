@@ -1,0 +1,160 @@
+.call-container {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-area {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #1a1a1a;
+}
+
+.remote-video:not(.active) {
+  display: none;
+}
+
+.waiting-message {
+  position: absolute;
+  text-align: center;
+  color: #fff;
+}
+
+.waiting-message p {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 300;
+}
+
+.waiting-message .room-code {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #888;
+  font-family: monospace;
+  letter-spacing: 0.1em;
+}
+
+.local-video {
+  position: absolute;
+  bottom: 100px;
+  right: 20px;
+  width: 180px;
+  height: 135px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #333;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+}
+
+.control-button {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, transform 0.1s;
+  backdrop-filter: blur(10px);
+}
+
+.control-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.control-button:active {
+  transform: scale(0.95);
+}
+
+.control-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+.control-button.off {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1a1a1a;
+}
+
+.control-button.off:hover {
+  background: #fff;
+}
+
+.control-button.leave {
+  background: #dc3545;
+}
+
+.control-button.leave:hover {
+  background: #c82333;
+}
+
+.call-error {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.call-error p {
+  margin: 0;
+  color: #dc3545;
+}
+
+.call-error button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .local-video {
+    width: 120px;
+    height: 90px;
+    bottom: 90px;
+    right: 10px;
+  }
+
+  .control-button {
+    width: 48px;
+    height: 48px;
+  }
+
+  .control-button svg {
+    width: 20px;
+    height: 20px;
+  }
+}
