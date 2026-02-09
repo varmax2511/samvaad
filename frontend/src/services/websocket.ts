@@ -6,10 +6,11 @@ class WebSocketService {
   private ws: WebSocket | null = null;
   private messageHandlers: Set<MessageHandler> = new Set();
 
-  connect(url: string): Promise<void> {
+  connect(url: string, token?: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        this.ws = new WebSocket(url);
+        const wsUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
+        this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
           resolve();

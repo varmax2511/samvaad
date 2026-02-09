@@ -73,7 +73,7 @@ export default function Call() {
           }
         };
 
-        await wsService.connect(WS_URL);
+        await wsService.connect(WS_URL, user.token);
         if (!isMounted) return;
 
         setIsConnected(true);

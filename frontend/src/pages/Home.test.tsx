@@ -19,13 +19,13 @@ describe('Home', () => {
     sessionStorage.clear();
     mockNavigate.mockClear();
     // Set up authenticated user
-    sessionStorage.setItem('samvaad_user', JSON.stringify({ id: 'test-id', name: 'Test User' }));
+    sessionStorage.setItem('samvaad_user', JSON.stringify({ id: 'test-id', username: 'testuser', token: 'test-token' }));
   });
 
   it('should render home page with user name', () => {
     render(<Home />);
 
-    expect(screen.getByText('Test User')).toBeInTheDocument();
+    expect(screen.getByText('testuser')).toBeInTheDocument();
     expect(screen.getByText('Start a conversation')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New Call' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();

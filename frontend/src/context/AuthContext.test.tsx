@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
+
+// Mock the auth service
+vi.mock('../services/auth', () => ({
+  login: vi.fn().mockResolvedValue({ token: 'mock-token', userId: 'mock-user-id' }),
+  register: vi.fn().mockResolvedValue({ token: 'mock-token', userId: 'mock-user-id' }),
+}));
 
 describe('AuthContext', () => {
   beforeEach(() => {
@@ -17,44 +23,53 @@ describe('AuthContext', () => {
     expect(result.current.isAuthenticated).toBe(false);
   });
 
-  it('should login user and store in sessionStorage', () => {
+  it('should login user and store in sessionStorage', async () => {
     const { result } = renderHook(() => useAuth(), {
       wrapper: AuthProvider,
     });
 
-    act(() => {
-      result.current.login('Test User');
+    await act(async () => {
+      await result.current.login('testuser', 'password123');
     });
 
-    expect(result.current.user).not.toBeNull();
-    expect(result.current.user?.name).toBe('Test User');
-    expect(result.current.user?.id).toBe('test-uuid-1234');
+    await waitFor(() => {
+      expect(result.current.user).not.toBeNull();
+    });
+
+    expect(result.current.user?.username).toBe('testuser');
+    expect(result.current.user?.token).toBe('mock-token');
     expect(result.current.isAuthenticated).toBe(true);
 
     const stored = sessionStorage.getItem('samvaad_user');
     expect(stored).not.toBeNull();
-    expect(JSON.parse(stored!).name).toBe('Test User');
+    expect(JSON.parse(stored!).username).toBe('testuser');
   });
 
-  it('should trim whitespace from name on login', () => {
+  it('should register user and store in sessionStorage', async () => {
     const { result } = renderHook(() => useAuth(), {
       wrapper: AuthProvider,
     });
 
-    act(() => {
-      result.current.login('  Trimmed Name  ');
+    await act(async () => {
+      await result.current.register('newuser', 'password123');
     });
 
-    expect(result.current.user?.name).toBe('Trimmed Name');
+    await waitFor(() => {
+      expect(result.current.user).not.toBeNull();
+    });
+
+    expect(result.current.user?.username).toBe('newuser');
+    expect(result.current.user?.token).toBe('mock-token');
+    expect(result.current.isAuthenticated).toBe(true);
   });
 
-  it('should logout user and clear sessionStorage', () => {
+  it('should logout user and clear sessionStorage', async () => {
     const { result } = renderHook(() => useAuth(), {
       wrapper: AuthProvider,
     });
 
-    act(() => {
-      result.current.login('Test User');
+    await act(async () => {
+      await result.current.login('testuser', 'password123');
     });
 
     expect(result.current.isAuthenticated).toBe(true);
@@ -69,7 +84,7 @@ describe('AuthContext', () => {
   });
 
   it('should restore user from sessionStorage on mount', () => {
-    const storedUser = { id: 'stored-id', name: 'Stored User' };
+    const storedUser = { id: 'stored-id', username: 'storeduser', token: 'stored-token' };
     sessionStorage.setItem('samvaad_user', JSON.stringify(storedUser));
 
     const { result } = renderHook(() => useAuth(), {

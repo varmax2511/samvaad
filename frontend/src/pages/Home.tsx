@@ -39,7 +39,7 @@ export default function Home() {
   return (
     <div className="home-container">
       <header className="home-header">
-        <span className="user-name">{user?.name}</span>
+        <span className="user-name">{user?.username}</span>
         <button onClick={handleLogout} className="logout-button">
           Log out
         </button>
