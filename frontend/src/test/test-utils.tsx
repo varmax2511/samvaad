@@ -1,5 +1,6 @@
-import { ReactNode } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { render } from '@testing-library/react';
+import type { RenderOptions } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 
