@@ -21,7 +21,7 @@ vi.mock('../services/websocket', () => ({
     connect: vi.fn().mockResolvedValue(undefined),
     disconnect: vi.fn(),
     send: vi.fn(),
-    onMessage: vi.fn().mockReturnValue(() => {}),
+    onMessage: vi.fn().mockReturnValue(() => true),
     isConnected: true,
   },
 }));
@@ -54,10 +54,10 @@ describe('Call', () => {
     vi.clearAllMocks();
 
     // Set up authenticated user
-    sessionStorage.setItem('samvaad_user', JSON.stringify({ id: 'test-id', name: 'Test User' }));
+    sessionStorage.setItem('samvaad_user', JSON.stringify({ id: 'test-id', username: 'testuser', token: 'test-token' }));
 
     // Reset the mock to default behavior
-    vi.mocked(wsService.onMessage).mockReturnValue(() => {});
+    vi.mocked(wsService.onMessage).mockReturnValue(() => true);
   });
 
   afterEach(() => {
@@ -147,7 +147,7 @@ describe('Call', () => {
       setTimeout(() => {
         handler({ type: 'error', payload: { message: errorMessage } });
       }, 10);
-      return () => {};
+      return () => true;
     });
 
     renderWithMemoryRouter(<Call />, { initialEntries: ['/call/TEST123'] });
@@ -165,7 +165,7 @@ describe('Call', () => {
       setTimeout(() => {
         handler({ type: 'error', payload: { message: 'Test error' } });
       }, 10);
-      return () => {};
+      return () => true;
     });
 
     renderWithMemoryRouter(<Call />, { initialEntries: ['/call/TEST123'] });
@@ -187,7 +187,7 @@ describe('Call', () => {
           payload: { userId: 'peer-id' },
         });
       }, 10);
-      return () => {};
+      return () => true;
     });
 
     renderWithMemoryRouter(<Call />, { initialEntries: ['/call/TEST123'] });
